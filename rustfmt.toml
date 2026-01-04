@@ -1,0 +1,18 @@
+# Rust formatting configuration for RAPS Demo Workflows
+
+# Edition and style
+edition = "2021"
+
+# Line length and wrapping
+max_width = 100
+
+# Imports
+reorder_imports = true
+
+# Control flow
+match_block_trailing_comma = true
+
+# Misc formatting
+use_small_heuristics = "Default"
+newline_style = "Unix"
+remove_nested_parens = true

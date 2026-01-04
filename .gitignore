@@ -1,0 +1,47 @@
+# Rust build artifacts
+/target/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+/logs/
+/temp/
+
+# Configuration and secrets
+.env
+.env.local
+config.local.toml
+*.pem
+*.key
+
+# Test artifacts
+/test-results/
+/coverage/
+*.profraw
+
+# Demo-specific ignores
+/workflows/temp/
+/demo-resources/
+*.demo.yaml
+
+# Debug files
+check_out.txt
+
+# Large asset files (use Git LFS or download separately)
+/Assets/

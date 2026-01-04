@@ -1,0 +1,46 @@
+metadata:
+  id: stapler-md-pipeline
+  name: Stapler Model Derivative Pipeline
+  description: Uploads the Stapler Inventor assembly and starts SVF2 translation.
+  category: model-derivative
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 300
+  required_assets:
+    - Assets/Inventor/autodesk_inventor_2022_samples/autodesk_inventor_2022_samples/Models/Assemblies/Stapler/Stapler.iam
+
+steps:
+  - id: create-demo-bucket
+    name: Create Demo Bucket
+    description: Creates a unique bucket for the Stapler demo.
+    command:
+      type: bucket
+      action: create
+      bucket_name: raps-stapler-demo-{uuid}
+      retention_policy: transient
+  
+  - id: upload-stapler
+    name: Upload Stapler Files
+    description: Uploads the entire Stapler folder as a batch.
+    command:
+      type: object
+      action: upload
+      bucket_name: raps-stapler-demo-{uuid}
+      file_path: Assets/Inventor/autodesk_inventor_2022_samples/autodesk_inventor_2022_samples/Models/Assemblies/Stapler/
+      batch: true
+
+  - id: start-translation
+    name: Start SVF2 Translation
+    description: Triggers SVF2 translation for the main Stapler.iam assembly.
+    command:
+      type: translate
+      action: start
+      urn: "{urn}"
+      format: svf2
+
+cleanup:
+  - type: bucket
+    action: delete
+    bucket_name: raps-stapler-demo-{uuid}
+    force: true

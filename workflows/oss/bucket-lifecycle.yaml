@@ -1,0 +1,39 @@
+metadata:
+  id: oss-bucket-lifecycle
+  name: OSS Bucket Lifecycle Demo
+  description: Demonstrates creating a bucket, uploading an object, and cleaning up.
+  category: oss
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 30
+  required_assets: []
+
+steps:
+  - id: create-bucket
+    name: Create Bucket
+    description: Creates a new OSS bucket for the demo.
+    command:
+      type: bucket
+      action: create
+      bucket_name: raps-demo-bucket-{uuid}
+      retention_policy: transient
+      region: US
+    cleanup_commands:
+      - type: bucket
+        action: delete
+        bucket_name: raps-demo-bucket-{uuid}
+        force: true
+
+  - id: check-status
+    name: Check Auth Status
+    description: Verifies that the CLI is authenticated.
+    command:
+      type: auth
+      action: status
+
+cleanup:
+  - type: bucket
+    action: delete
+    bucket_name: raps-demo-bucket-{uuid}
+    force: true

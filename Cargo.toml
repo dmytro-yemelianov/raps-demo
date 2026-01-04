@@ -1,0 +1,73 @@
+[package]
+name = "raps-demo-workflows"
+version = "0.1.0"
+edition = "2021"
+authors = ["RAPS Team"]
+description = "Interactive demo system for RAPS CLI showcasing Autodesk Platform Services workflows"
+license = "MIT"
+repository = "https://github.com/autodesk-platform-services/raps-demo"
+keywords = ["autodesk", "aps", "cli", "demo", "workflows"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "raps-demo"
+path = "src/main.rs"
+
+[dependencies]
+# CLI and argument parsing
+clap = { version = "4.4", features = ["derive", "env"] }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization and configuration
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1.0"
+
+# Terminal User Interface
+ratatui = "0.25"
+crossterm = "0.27"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+
+# File system and path utilities
+walkdir = "2.4"
+tempfile = "3.8"
+
+# Date and time
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID generation for resource tracking
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# HTTP client for API validation
+reqwest = { version = "0.11", features = ["json"] }
+
+# Configuration management
+dirs = "5.0"
+toml = "0.8"
+
+[dev-dependencies]
+# Test utilities
+tempfile = "3.8"
+
+# Async testing
+tokio-test = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
