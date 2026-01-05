@@ -22,6 +22,9 @@ use tokio::sync::mpsc;
 mod flowchart;
 use flowchart::{FlowchartWidget, FlowchartState};
 
+mod preflight;
+use preflight::{PreflightChecker, PreflightStatus, CheckAction};
+
 use crate::workflow::{
     ExecutionStatus, ExecutionUpdate, WorkflowDiscovery, WorkflowExecutor, WorkflowMetadata,
     WorkflowDefinition, RapsCommand,
@@ -62,7 +65,7 @@ pub struct TuiApp {
     executor: Arc<WorkflowExecutor>,
     /// Receiver for execution updates
     update_receiver: mpsc::UnboundedReceiver<ExecutionUpdate>,
-    /// Current detail tab (0 = Overview, 1 = Steps, 2 = Flowchart, 3 = YAML)
+    /// Current detail tab (0 = Overview, 1 = Steps, 2 = Flowchart, 3 = Assets, 4 = YAML)
     detail_tab: usize,
     /// Scroll offset for steps view
     steps_scroll: usize,
@@ -94,6 +97,16 @@ pub struct TuiApp {
     pending_run: bool,
     /// Last click position and time for double-click detection
     last_click: Option<(u16, u16, std::time::Instant)>,
+    /// Pre-flight checker for workflow requirements
+    preflight_checker: PreflightChecker,
+    /// Cached preflight status for selected workflow
+    cached_preflight: Option<PreflightStatus>,
+    /// Scroll offset for assets view
+    assets_scroll: usize,
+    /// Selected asset index in assets tab
+    selected_asset: usize,
+    /// Pending asset download action
+    pending_download: Option<usize>,
 }
 
 /// State for a popup dialog
@@ -155,10 +168,18 @@ impl TuiApp {
             popup: None,
             pending_run: false,
             last_click: None,
+            preflight_checker: PreflightChecker::new(),
+            cached_preflight: None,
+            assets_scroll: 0,
+            selected_asset: 0,
+            pending_download: None,
         };
         
         // Build initial sidebar items
         app.rebuild_sidebar_items();
+        
+        // Initialize preflight cache for first workflow
+        app.update_preflight_cache();
         
         Ok(app)
     }
@@ -249,21 +270,34 @@ impl TuiApp {
                             match key.code {
                                 KeyCode::Char('q') => self.should_quit = true,
                                 KeyCode::Up | KeyCode::Char('k') => {
-                                    if (self.detail_tab == 1 || self.detail_tab == 3) && self.steps_scroll > 0 {
+                                    if (self.detail_tab == 1 || self.detail_tab == 4) && self.steps_scroll > 0 {
                                         self.steps_scroll -= 1;
                                     } else if self.detail_tab == 2 {
                                         self.flowchart_state.scroll_up(1);
+                                    } else if self.detail_tab == 3 {
+                                        // Navigate assets list
+                                        if self.selected_asset > 0 {
+                                            self.selected_asset -= 1;
+                                        }
                                     } else if self.detail_tab == 0 {
                                         self.previous_workflow();
+                                        self.update_preflight_cache();
                                     }
                                 }
                                 KeyCode::Down | KeyCode::Char('j') => {
-                                    if self.detail_tab == 1 || self.detail_tab == 3 {
+                                    if self.detail_tab == 1 || self.detail_tab == 4 {
                                         self.steps_scroll += 1;
                                     } else if self.detail_tab == 2 {
                                         self.flowchart_state.scroll_down(1);
+                                    } else if self.detail_tab == 3 {
+                                        // Navigate assets list
+                                        let assets_count = self.preflight_checker.get_all_assets_with_status().len();
+                                        if self.selected_asset < assets_count.saturating_sub(1) {
+                                            self.selected_asset += 1;
+                                        }
                                     } else if self.detail_tab == 0 {
                                         self.next_workflow();
+                                        self.update_preflight_cache();
                                     }
                                 }
                                 KeyCode::Left | KeyCode::Char('h') => {
@@ -272,12 +306,12 @@ impl TuiApp {
                                     }
                                 }
                                 KeyCode::Right | KeyCode::Char('l') => {
-                                    if self.detail_tab < 3 {
+                                    if self.detail_tab < 4 {
                                         self.detail_tab += 1;
                                     }
                                 }
                                 KeyCode::Tab => {
-                                    self.detail_tab = (self.detail_tab + 1) % 4;
+                                    self.detail_tab = (self.detail_tab + 1) % 5;
                                     self.steps_scroll = 0;
                                     self.flowchart_state.reset();
                                 }
@@ -285,17 +319,31 @@ impl TuiApp {
                                 KeyCode::Char('1') => { self.detail_tab = 0; self.steps_scroll = 0; self.flowchart_state.reset(); }
                                 KeyCode::Char('2') => { self.detail_tab = 1; self.steps_scroll = 0; }
                                 KeyCode::Char('3') => { self.detail_tab = 2; self.flowchart_state.reset(); }
-                                KeyCode::Char('4') => { self.detail_tab = 3; self.steps_scroll = 0; }
+                                KeyCode::Char('4') => { self.detail_tab = 3; self.assets_scroll = 0; }
+                                KeyCode::Char('5') => { self.detail_tab = 4; self.steps_scroll = 0; }
+                                KeyCode::Char('d') | KeyCode::Char('D') => {
+                                    // Download selected asset if in Assets tab
+                                    if self.detail_tab == 3 {
+                                        self.pending_download = Some(self.selected_asset);
+                                    }
+                                }
                                 KeyCode::PageUp => {
-                                    if self.detail_tab == 1 || self.detail_tab == 3 { self.steps_scroll = self.steps_scroll.saturating_sub(5); }
+                                    if self.detail_tab == 1 || self.detail_tab == 4 { self.steps_scroll = self.steps_scroll.saturating_sub(5); }
                                     else if self.detail_tab == 2 { self.flowchart_state.scroll_up(5); }
+                                    else if self.detail_tab == 3 { self.selected_asset = self.selected_asset.saturating_sub(5); }
                                 }
                                 KeyCode::PageDown => {
-                                    if self.detail_tab == 1 || self.detail_tab == 3 { self.steps_scroll += 5; }
+                                    if self.detail_tab == 1 || self.detail_tab == 4 { self.steps_scroll += 5; }
                                     else if self.detail_tab == 2 { self.flowchart_state.scroll_down(5); }
+                                    else if self.detail_tab == 3 {
+                                        let assets_count = self.preflight_checker.get_all_assets_with_status().len();
+                                        self.selected_asset = (self.selected_asset + 5).min(assets_count.saturating_sub(1));
+                                    }
                                 }
                                 KeyCode::Home => {
                                     self.steps_scroll = 0;
+                                    self.assets_scroll = 0;
+                                    self.selected_asset = 0;
                                     self.flowchart_state.reset();
                                 }
                                 // Resize panels with [ ] for sidebar, { } for console
@@ -333,6 +381,11 @@ impl TuiApp {
                     }
                     _ => {}
                 }
+            }
+            
+            // Handle pending asset download
+            if let Some(asset_idx) = self.pending_download.take() {
+                self.download_asset(asset_idx);
             }
 
             // Check for execution updates (non-blocking)
@@ -509,6 +562,7 @@ impl TuiApp {
                                 if x >= run_button_x {
                                     // Run button clicked - select and trigger execution
                                     self.list_state.select(Some(clicked_display_index));
+                                    self.update_preflight_cache();
                                     self.pending_run = true;
                                 } else {
                                     // Check for double-click to run workflow
@@ -521,6 +575,7 @@ impl TuiApp {
                                     
                                     // Select workflow (use display index for list widget)
                                     self.list_state.select(Some(clicked_display_index));
+                                    self.update_preflight_cache();
                                     
                                     if is_double_click {
                                         // Double-click triggers run
@@ -759,8 +814,24 @@ impl TuiApp {
             ])
             .split(area);
 
-        // Render tabs
-        let tab_titles = vec!["Overview", "Steps", "Flowchart", "YAML"];
+        // Render tabs with status indicators
+        let preflight = self.cached_preflight.as_ref();
+        let auth_ok = preflight.map(|p| p.auth_status().map(|c| c.passed).unwrap_or(true)).unwrap_or(true);
+        let assets_ok = preflight.map(|p| p.assets_status().map(|c| c.passed).unwrap_or(true)).unwrap_or(true);
+        
+        let overview_title = if auth_ok && assets_ok {
+            "Overview ✓".to_string()
+        } else {
+            "Overview ⚠".to_string()
+        };
+        
+        let assets_title = if assets_ok {
+            "Assets ✓".to_string()
+        } else {
+            "Assets ⚠".to_string()
+        };
+        
+        let tab_titles = vec![overview_title, "Steps".to_string(), "Flowchart".to_string(), assets_title, "YAML".to_string()];
         let tabs = Tabs::new(tab_titles)
             .block(Block::default().borders(Borders::ALL).title("Details"))
             .select(self.detail_tab)
@@ -777,7 +848,8 @@ impl TuiApp {
             0 => self.render_overview(f, detail_layout[1]),
             1 => self.render_steps(f, detail_layout[1]),
             2 => self.render_flowchart(f, detail_layout[1]),
-            3 => self.render_yaml(f, detail_layout[1]),
+            3 => self.render_assets(f, detail_layout[1]),
+            4 => self.render_yaml(f, detail_layout[1]),
             _ => {}
         }
     }
@@ -825,6 +897,36 @@ impl TuiApp {
                     prereqs
                 };
                 
+                // Build preflight status section
+                let preflight_section = if let Some(ref preflight) = self.cached_preflight {
+                    let mut lines = Vec::new();
+                    for check in &preflight.checks {
+                        let icon = if check.passed { "✓" } else { "✗" };
+                        let color_hint = if check.passed { "" } else { " [!]" };
+                        lines.push(format!("  {} {}: {}{}", icon, check.name, check.message, color_hint));
+                    }
+                    if preflight.all_passed {
+                        lines.push("  ══════════════════════════════════".to_string());
+                        lines.push("  ✓ Ready to run! Press ENTER to execute".to_string());
+                    } else {
+                        lines.push("  ══════════════════════════════════".to_string());
+                        lines.push("  ⚠ Missing requirements - see Assets tab".to_string());
+                    }
+                    lines.join("\n")
+                } else {
+                    "  Checking...".to_string()
+                };
+                
+                // Required assets section
+                let assets_section = if w.required_assets.is_empty() {
+                    "  None".to_string()
+                } else {
+                    w.required_assets.iter()
+                        .map(|a| format!("  • {}", a.display()))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                };
+                
                 format!(
                     "┌─ {} ─┐\n\n\
                      ID: {}\n\
@@ -835,14 +937,19 @@ impl TuiApp {
                      {}\n\n\
                      ─── Prerequisites ───\n\
                      {}\n\n\
-                     Press ENTER to run this workflow",
+                     ─── Required Assets ───\n\
+                     {}\n\n\
+                     ─── Pre-flight Check ───\n\
+                     {}",
                     w.name,
                     w.id,
                     w.category,
                     step_count,
                     w.estimated_duration.num_seconds(),
                     w.description,
-                    prereqs_section
+                    prereqs_section,
+                    assets_section,
+                    preflight_section
                 )
             } else {
                 "← Select a workflow (not a category)".to_string()
@@ -951,6 +1058,123 @@ impl TuiApp {
                 .title("Flowchart (^/v scroll)"));
         
         f.render_stateful_widget(flowchart, area, &mut self.flowchart_state);
+    }
+
+    fn render_assets(&self, f: &mut ratatui::Frame, area: Rect) {
+        use crate::assets::AssetCategory as AssetCat;
+        
+        let assets_with_status = self.preflight_checker.get_all_assets_with_status();
+        
+        // Build content
+        let mut lines: Vec<Line> = Vec::new();
+        
+        // Header
+        lines.push(Line::from(vec![
+            Span::styled("═══ ", Style::default().fg(Color::Cyan)),
+            Span::styled("AUTODESK SAMPLE ASSETS", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+            Span::styled(" ═══", Style::default().fg(Color::Cyan)),
+        ]));
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            "© Autodesk, Inc. All rights reserved.",
+            Style::default().fg(Color::DarkGray),
+        )));
+        lines.push(Line::from(""));
+        
+        // Status summary
+        let downloaded = assets_with_status.iter().filter(|(_, d)| *d).count();
+        let total = assets_with_status.len();
+        let status_color = if downloaded == total { Color::Green } else { Color::Yellow };
+        lines.push(Line::from(vec![
+            Span::raw("Status: "),
+            Span::styled(
+                format!("{}/{} downloaded", downloaded, total),
+                Style::default().fg(status_color),
+            ),
+        ]));
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            "Use ↑↓ to select, D to download selected asset",
+            Style::default().fg(Color::DarkGray),
+        )));
+        lines.push(Line::from(""));
+        
+        // Group by category
+        let mut current_category: Option<AssetCat> = None;
+        
+        for (i, (asset, is_downloaded)) in assets_with_status.iter().enumerate() {
+            // Category header
+            if current_category != Some(asset.category) {
+                current_category = Some(asset.category);
+                lines.push(Line::from(""));
+                lines.push(Line::from(Span::styled(
+                    format!("┌─ {} ─────────────────────────", asset.category.display_name()),
+                    Style::default().fg(Color::Cyan),
+                )));
+            }
+            
+            // Asset entry
+            let status_icon = if *is_downloaded { "✓" } else { "⬇" };
+            let status_color = if *is_downloaded { Color::Green } else { Color::Yellow };
+            let is_selected = i == self.selected_asset;
+            
+            let line_style = if is_selected {
+                Style::default().bg(Color::DarkGray)
+            } else {
+                Style::default()
+            };
+            
+            let prefix = if is_selected { "> " } else { "  " };
+            
+            lines.push(Line::from(vec![
+                Span::styled(prefix, line_style),
+                Span::styled(status_icon, Style::default().fg(status_color)),
+                Span::styled(" ", Style::default()),
+                Span::styled(&asset.name, line_style.add_modifier(if is_selected { Modifier::BOLD } else { Modifier::empty() })),
+                Span::styled(format!(" ({:.1} MB)", asset.estimated_size_mb), Style::default().fg(Color::DarkGray)),
+            ]));
+            
+            if is_selected {
+                lines.push(Line::from(vec![
+                    Span::styled("    ", Style::default()),
+                    Span::styled(&asset.description, Style::default().fg(Color::Gray)),
+                ]));
+                if !*is_downloaded {
+                    lines.push(Line::from(vec![
+                        Span::styled("    ", Style::default()),
+                        Span::styled("[Press D to download]", Style::default().fg(Color::Yellow)),
+                    ]));
+                }
+            }
+        }
+        
+        // Footer with workflow requirements if any
+        if let Some(selected) = self.list_state.selected() {
+            if let Some(SidebarItem::Workflow { index }) = self.sidebar_items.get(selected) {
+                let w = &self.workflows[*index];
+                if !w.required_assets.is_empty() {
+                    lines.push(Line::from(""));
+                    lines.push(Line::from(Span::styled(
+                        format!("─── Required for '{}' ───", w.name),
+                        Style::default().fg(Color::Magenta),
+                    )));
+                    for asset_path in &w.required_assets {
+                        let exists = asset_path.exists();
+                        let icon = if exists { "✓" } else { "✗" };
+                        let color = if exists { Color::Green } else { Color::Red };
+                        lines.push(Line::from(vec![
+                            Span::styled(format!("  {} ", icon), Style::default().fg(color)),
+                            Span::styled(asset_path.display().to_string(), Style::default()),
+                        ]));
+                    }
+                }
+            }
+        }
+        
+        let paragraph = Paragraph::new(lines)
+            .block(Block::default().borders(Borders::ALL).title("Assets (D=download)"))
+            .scroll((self.assets_scroll as u16, 0));
+        f.render_widget(paragraph, area);
     }
 
     fn render_console(&self, f: &mut ratatui::Frame, area: Rect) {
@@ -1098,12 +1322,87 @@ impl TuiApp {
         }
         None
     }
+    
+    /// Update the cached preflight status for the selected workflow
+    fn update_preflight_cache(&mut self) {
+        if let Some(selected) = self.list_state.selected() {
+            if let Some(SidebarItem::Workflow { index }) = self.sidebar_items.get(selected) {
+                let workflow = &self.workflows[*index];
+                self.cached_preflight = Some(self.preflight_checker.check(workflow));
+            } else {
+                self.cached_preflight = None;
+            }
+        } else {
+            self.cached_preflight = None;
+        }
+    }
+    
+    /// Download an asset by index
+    fn download_asset(&mut self, asset_index: usize) {
+        let assets = self.preflight_checker.get_all_assets_with_status();
+        if let Some((asset, is_downloaded)) = assets.get(asset_index) {
+            if *is_downloaded {
+                self.logs.push(format!("Asset already downloaded: {}", asset.name));
+                return;
+            }
+            
+            self.logs.push(format!("Downloading: {}...", asset.name));
+            
+            // Clone what we need before the match
+            let asset_clone = asset.clone();
+            
+            match self.preflight_checker.download_asset(&asset_clone) {
+                Ok(path) => {
+                    self.logs.push(format!("  ✓ Downloaded to: {}", path.display()));
+                    // Refresh preflight cache
+                    self.update_preflight_cache();
+                }
+                Err(e) => {
+                    self.logs.push(format!("  ✗ Download failed: {}", e));
+                }
+            }
+        }
+    }
 
     async fn run_selected_workflow(&mut self) -> Result<()> {
         // Get the actual workflow index from sidebar_items
         if let Some(selected) = self.list_state.selected() {
             if let Some(SidebarItem::Workflow { index: workflow_index }) = self.sidebar_items.get(selected) {
                 let metadata = &self.workflows[*workflow_index];
+                
+                // Check preflight status before running
+                let preflight = self.preflight_checker.check(metadata);
+                
+                if !preflight.all_passed {
+                    // Show popup with missing requirements
+                    let blockers = preflight.blocking_checks.join(", ");
+                    
+                    // Check if assets can be downloaded
+                    let has_downloadable = preflight.checks.iter().any(|c| {
+                        matches!(&c.action, Some(CheckAction::DownloadAssets(_)))
+                    });
+                    
+                    if has_downloadable {
+                        self.popup = Some(PopupState {
+                            title: " Missing Requirements ".to_string(),
+                            message: format!(
+                                "Cannot run '{}'\n\nMissing: {}\n\nGo to Assets tab (press 4) to download required files.",
+                                metadata.name, blockers
+                            ),
+                            url: None,
+                        });
+                    } else {
+                        self.popup = Some(PopupState {
+                            title: " Missing Requirements ".to_string(),
+                            message: format!(
+                                "Cannot run '{}'\n\nMissing: {}\n\nPlease resolve these requirements first.",
+                                metadata.name, blockers
+                            ),
+                            url: None,
+                        });
+                    }
+                    return Ok(());
+                }
 
                 // Use cached workflow definition instead of re-discovering
                 if let Some(definition) = self.workflow_definitions.get(&metadata.id) {

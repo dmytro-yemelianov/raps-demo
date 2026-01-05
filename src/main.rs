@@ -6,6 +6,7 @@
 use anyhow::Result;
 use clap::Parser;
 
+mod assets;
 mod config;
 mod demo;
 mod resource;
