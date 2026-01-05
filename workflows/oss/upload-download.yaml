@@ -1,0 +1,89 @@
+metadata:
+  id: oss-upload-download-demo
+  name: OSS Upload & Download Demo
+  description: Demonstrates uploading files to OSS, generating signed URLs for sharing, and downloading files. Shows the full object lifecycle.
+  category: oss
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 45
+  required_assets:
+    - Assets/Revit/racbasicsamplefamily.rfa
+
+steps:
+  - id: create-bucket
+    name: Create Demo Bucket
+    description: Creates a temporary bucket for the upload/download demo.
+    command:
+      type: bucket
+      action: create
+      bucket_name: raps-upload-demo-{uuid}
+      retention_policy: transient
+
+  - id: list-buckets
+    name: List All Buckets
+    description: Lists all accessible buckets to verify creation.
+    command:
+      type: bucket
+      action: list
+
+  - id: upload-file
+    name: Upload Sample File
+    description: Uploads a Revit family file to the bucket.
+    command:
+      type: object
+      action: upload
+      bucket_name: raps-upload-demo-{uuid}
+      file_path: Assets/Revit/racbasicsamplefamily.rfa
+      object_key: sample-family.rfa
+
+  - id: list-objects
+    name: List Bucket Objects
+    description: Lists all objects in the bucket to verify upload.
+    command:
+      type: object
+      action: list
+      bucket_name: raps-upload-demo-{uuid}
+
+  - id: get-object-details
+    name: Get Object Details
+    description: Retrieves metadata about the uploaded object.
+    command:
+      type: object
+      action: details
+      bucket_name: raps-upload-demo-{uuid}
+      object_key: sample-family.rfa
+
+  - id: generate-signed-url
+    name: Generate Signed URL
+    description: Creates a pre-signed URL for secure file sharing (expires in 10 minutes).
+    command:
+      type: object
+      action: signed-url
+      bucket_name: raps-upload-demo-{uuid}
+      object_key: sample-family.rfa
+      expires_in: 600
+
+  - id: download-file
+    name: Download File
+    description: Downloads the file back from OSS to verify round-trip.
+    command:
+      type: object
+      action: download
+      bucket_name: raps-upload-demo-{uuid}
+      object_key: sample-family.rfa
+
+  - id: delete-object
+    name: Delete Object
+    description: Removes the object from the bucket.
+    command:
+      type: object
+      action: delete
+      bucket_name: raps-upload-demo-{uuid}
+      object_key: sample-family.rfa
+
+cleanup:
+  - type: bucket
+    action: delete
+    bucket_name: raps-upload-demo-{uuid}
+    force: true

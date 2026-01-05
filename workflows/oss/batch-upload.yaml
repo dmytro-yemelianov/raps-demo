@@ -1,0 +1,53 @@
+metadata:
+  id: batch-upload-demo
+  name: Batch File Upload Demo
+  description: Demonstrates uploading multiple files at once using batch upload functionality. Great for uploading assemblies or file sets.
+  category: oss
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 60
+  required_assets:
+    - Assets/Revit/
+
+steps:
+  - id: create-bucket
+    name: Create Demo Bucket
+    description: Creates a bucket for batch upload testing.
+    command:
+      type: bucket
+      action: create
+      bucket_name: raps-batch-demo-{uuid}
+      retention_policy: transient
+
+  - id: batch-upload
+    name: Batch Upload Files
+    description: Uploads all Revit files from the Assets directory.
+    command:
+      type: object
+      action: upload
+      bucket_name: raps-batch-demo-{uuid}
+      file_path: Assets/Revit/
+      batch: true
+
+  - id: list-uploaded
+    name: List Uploaded Objects
+    description: Shows all objects uploaded to the bucket.
+    command:
+      type: object
+      action: list
+      bucket_name: raps-batch-demo-{uuid}
+
+  - id: bucket-details
+    name: Get Bucket Details
+    description: Retrieves bucket information including object count.
+    command:
+      type: bucket
+      action: details
+      bucket_name: raps-batch-demo-{uuid}
+
+cleanup:
+  - type: bucket
+    action: delete
+    bucket_name: raps-batch-demo-{uuid}
+    force: true

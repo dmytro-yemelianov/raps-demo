@@ -253,10 +253,10 @@ impl RapsClient {
                     BucketAction::Create => {
                         args.push("create".to_string());
                         if let Some(name) = &params.bucket_name {
-                            args.push(name.clone());
+                            args.extend(["--key".to_string(), name.clone()]);
                         }
                         if let Some(policy) = &params.retention_policy {
-                            args.extend(["--retention-policy".to_string(), policy.clone()]);
+                            args.extend(["--policy".to_string(), policy.clone()]);
                         }
                         if let Some(region) = &params.region {
                             args.extend(["--region".to_string(), region.clone()]);
@@ -265,10 +265,10 @@ impl RapsClient {
                     BucketAction::Delete => {
                         args.push("delete".to_string());
                         if let Some(name) = &params.bucket_name {
-                            args.push(name.clone());
+                            args.extend(["--key".to_string(), name.clone()]);
                         }
                         if params.force.unwrap_or(false) {
-                            args.push("--force".to_string());
+                            args.push("--yes".to_string());
                         }
                     }
                     BucketAction::List => {
@@ -277,7 +277,7 @@ impl RapsClient {
                     BucketAction::Details => {
                         args.push("details".to_string());
                         if let Some(name) = &params.bucket_name {
-                            args.push(name.clone());
+                            args.extend(["--key".to_string(), name.clone()]);
                         }
                     }
                 }
@@ -471,9 +471,12 @@ impl RapsClient {
             }
         }
 
-        // Add JSON output flag if enabled
+        // Add non-interactive flag to prevent prompts when running as subprocess
+        args.push("--non-interactive".to_string());
+
+        // Add JSON output flag if enabled (using --output json format)
         if self.config.parse_json_output {
-            args.push("--json".to_string());
+            args.extend(["--output".to_string(), "json".to_string()]);
         }
 
         Ok(args)
@@ -572,7 +575,7 @@ mod tests {
         };
 
         let args = client.build_command_args(&command).unwrap();
-        assert_eq!(args, vec!["auth", "status", "--json"]);
+        assert_eq!(args, vec!["auth", "status", "--non-interactive", "--output", "json"]);
     }
 
     #[test]
@@ -583,17 +586,19 @@ mod tests {
             params: BucketParams {
                 bucket_name: Some("test-bucket".to_string()),
                 retention_policy: Some("transient".to_string()),
-                region: Some("us-west-2".to_string()),
+                region: Some("US".to_string()),
                 force: None,
             },
         };
 
         let args = client.build_command_args(&command).unwrap();
         assert_eq!(args, vec![
-            "bucket", "create", "test-bucket",
-            "--retention-policy", "transient",
-            "--region", "us-west-2",
-            "--json"
+            "bucket", "create",
+            "--key", "test-bucket",
+            "--policy", "transient",
+            "--region", "US",
+            "--non-interactive",
+            "--output", "json"
         ]);
     }
 
@@ -615,7 +620,8 @@ mod tests {
         assert_eq!(args, vec![
             "object", "upload", "test-bucket", "/path/to/file.dwg",
             "--key", "test-file.dwg",
-            "--json"
+            "--non-interactive",
+            "--output", "json"
         ]);
     }
 
@@ -637,7 +643,8 @@ mod tests {
             "translate", "start", "test-urn",
             "--format", "svf2",
             "--wait",
-            "--json"
+            "--non-interactive",
+            "--output", "json"
         ]);
     }
 
@@ -650,7 +657,7 @@ mod tests {
         };
 
         let args = client.build_command_args(&command).unwrap();
-        assert_eq!(args, vec!["custom-command", "arg1", "arg2", "--json"]);
+        assert_eq!(args, vec!["custom-command", "arg1", "arg2", "--non-interactive", "--output", "json"]);
     }
 
     #[test]

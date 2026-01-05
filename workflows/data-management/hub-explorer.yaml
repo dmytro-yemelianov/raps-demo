@@ -1,0 +1,39 @@
+metadata:
+  id: dm-hub-exploration
+  name: Data Management Hub Explorer
+  description: Explores hubs, projects, and folders using the Data Management API. Lists available resources and navigates the folder structure.
+  category: data-management
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials with Data Management scope required
+    - type: permissions
+      description: Access to at least one ACC/BIM 360 hub
+  estimated_duration: 30
+  required_assets: []
+
+steps:
+  - id: list-hubs
+    name: List Available Hubs
+    description: Retrieves all accessible hubs (ACC, BIM 360, Fusion Team).
+    command:
+      type: data-management
+      action: hub-list
+
+  - id: list-projects
+    name: List Hub Projects
+    description: Lists all projects within the first accessible hub.
+    command:
+      type: data-management
+      action: project-list
+      hub_id: "{hub_id}"
+
+  - id: list-root-folder
+    name: List Root Folder
+    description: Lists contents of the project's root folder.
+    command:
+      type: data-management
+      action: folder-list
+      project_id: "{project_id}"
+      folder_id: "{root_folder_id}"
+
+cleanup: []

@@ -1,0 +1,63 @@
+metadata:
+  id: revit-svf2-translation
+  name: Revit to SVF2 Translation
+  description: Uploads a Revit project file and translates it to SVF2 format for web viewing. Demonstrates the complete Model Derivative workflow.
+  category: model-derivative
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 180
+  required_assets:
+    - Assets/Revit/racbasicsampleproject.rvt
+
+steps:
+  - id: create-bucket
+    name: Create Demo Bucket
+    description: Creates a unique transient bucket for the Revit translation demo.
+    command:
+      type: bucket
+      action: create
+      bucket_name: raps-revit-demo-{uuid}
+      retention_policy: transient
+
+  - id: upload-revit
+    name: Upload Revit File
+    description: Uploads the Revit project file to the OSS bucket.
+    command:
+      type: object
+      action: upload
+      bucket_name: raps-revit-demo-{uuid}
+      file_path: Assets/Revit/racbasicsampleproject.rvt
+      object_key: racbasicsampleproject.rvt
+
+  - id: start-translation
+    name: Start SVF2 Translation
+    description: Initiates SVF2 translation for web-based 3D viewing.
+    command:
+      type: translate
+      action: start
+      urn: "{urn}"
+      format: svf2
+
+  - id: check-status
+    name: Check Translation Status
+    description: Polls the translation status until complete.
+    command:
+      type: translate
+      action: status
+      urn: "{urn}"
+      wait: true
+
+  - id: get-manifest
+    name: Get Manifest
+    description: Retrieves the translation manifest showing available derivatives.
+    command:
+      type: translate
+      action: manifest
+      urn: "{urn}"
+
+cleanup:
+  - type: bucket
+    action: delete
+    bucket_name: raps-revit-demo-{uuid}
+    force: true

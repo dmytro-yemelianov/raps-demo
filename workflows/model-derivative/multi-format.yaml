@@ -1,0 +1,99 @@
+metadata:
+  id: multi-format-translation
+  name: Multi-Format Translation Demo
+  description: Translates a model to multiple output formats (SVF2, OBJ, STEP) demonstrating the versatility of Model Derivative API.
+  category: model-derivative
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 420
+  required_assets:
+    - Assets/Revit/rmebasicsampleproject.rvt
+
+steps:
+  - id: create-bucket
+    name: Create Demo Bucket
+    description: Creates a unique bucket for the multi-format demo.
+    command:
+      type: bucket
+      action: create
+      bucket_name: raps-multiformat-demo-{uuid}
+      retention_policy: transient
+
+  - id: upload-model
+    name: Upload Model File
+    description: Uploads the Revit MEP sample project.
+    command:
+      type: object
+      action: upload
+      bucket_name: raps-multiformat-demo-{uuid}
+      file_path: Assets/Revit/rmebasicsampleproject.rvt
+      object_key: mep-sample.rvt
+
+  - id: translate-svf2
+    name: Translate to SVF2
+    description: Converts to SVF2 format for Autodesk Viewer integration.
+    command:
+      type: translate
+      action: start
+      urn: "{urn}"
+      format: svf2
+
+  - id: wait-svf2
+    name: Wait for SVF2
+    description: Waits for SVF2 translation to complete.
+    command:
+      type: translate
+      action: status
+      urn: "{urn}"
+      wait: true
+
+  - id: translate-obj
+    name: Translate to OBJ
+    description: Converts to OBJ format for 3D software compatibility.
+    command:
+      type: translate
+      action: start
+      urn: "{urn}"
+      format: obj
+
+  - id: wait-obj
+    name: Wait for OBJ
+    description: Waits for OBJ translation to complete.
+    command:
+      type: translate
+      action: status
+      urn: "{urn}"
+      wait: true
+
+  - id: translate-step
+    name: Translate to STEP
+    description: Converts to STEP format for CAD interoperability.
+    command:
+      type: translate
+      action: start
+      urn: "{urn}"
+      format: step
+
+  - id: wait-step
+    name: Wait for STEP
+    description: Waits for STEP translation to complete.
+    command:
+      type: translate
+      action: status
+      urn: "{urn}"
+      wait: true
+
+  - id: get-manifest
+    name: View All Derivatives
+    description: Retrieves manifest showing all generated derivatives.
+    command:
+      type: translate
+      action: manifest
+      urn: "{urn}"
+
+cleanup:
+  - type: bucket
+    action: delete
+    bucket_name: raps-multiformat-demo-{uuid}
+    force: true

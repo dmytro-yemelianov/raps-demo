@@ -1,0 +1,34 @@
+metadata:
+  id: auth-management-demo
+  name: Authentication Management
+  description: Demonstrates authentication lifecycle - checking status, refreshing tokens, and viewing auth details.
+  category: oss
+  prerequisites:
+    - type: authentication
+      description: You should already be logged in via 'raps auth login'
+  estimated_duration: 15
+  required_assets: []
+
+steps:
+  - id: check-status
+    name: Check Auth Status
+    description: Verifies current authentication status and token validity.
+    command:
+      type: auth
+      action: status
+
+  - id: refresh-token
+    name: Refresh Token
+    description: Refreshes the access token to extend the session.
+    command:
+      type: auth
+      action: refresh
+
+  - id: verify-refresh
+    name: Verify Token Refreshed
+    description: Confirms the token was successfully refreshed.
+    command:
+      type: auth
+      action: status
+
+cleanup: []

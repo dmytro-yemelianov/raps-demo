@@ -51,6 +51,9 @@ uuid = { version = "1.6", features = ["v4", "serde"] }
 # HTTP client for API validation
 reqwest = { version = "0.11", features = ["json"] }
 
+# Open URLs in browser
+open = "5.0"
+
 # Configuration management
 dirs = "5.0"
 toml = "0.8"

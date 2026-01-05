@@ -344,7 +344,7 @@ impl TokenRefresher {
             if let Some(_refresh_token) = &tokens.refresh_token {
                 // Use RAPS CLI to refresh the token with JSON output
                 let output = Command::new("raps")
-                    .args(&["auth", "refresh", "--json"])
+                    .args(&["auth", "refresh", "--output", "json"])
                     .output()
                     .context("Failed to run RAPS CLI for token refresh")?;
 

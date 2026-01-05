@@ -1,0 +1,88 @@
+metadata:
+  id: complete-viewer-pipeline
+  name: Complete Viewer Pipeline
+  description: End-to-end workflow demonstrating the full APS Viewer integration path - from file upload through translation to downloadable derivatives.
+  category: end-to-end
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 300
+  required_assets:
+    - Assets/Revit/rstbasicsampleproject.rvt
+
+steps:
+  - id: verify-auth
+    name: Verify Authentication
+    description: Ensures valid APS credentials before starting the pipeline.
+    command:
+      type: auth
+      action: status
+
+  - id: create-bucket
+    name: Create Storage Bucket
+    description: Creates a transient bucket for the viewer pipeline demo.
+    command:
+      type: bucket
+      action: create
+      bucket_name: raps-viewer-pipeline-{uuid}
+      retention_policy: transient
+
+  - id: upload-model
+    name: Upload Design File
+    description: Uploads the Revit structural sample project to OSS.
+    command:
+      type: object
+      action: upload
+      bucket_name: raps-viewer-pipeline-{uuid}
+      file_path: Assets/Revit/rstbasicsampleproject.rvt
+      object_key: structural-sample.rvt
+
+  - id: get-urn
+    name: Get Object URN
+    description: Retrieves object details to obtain the URN for translation.
+    command:
+      type: object
+      action: details
+      bucket_name: raps-viewer-pipeline-{uuid}
+      object_key: structural-sample.rvt
+
+  - id: start-svf2
+    name: Start SVF2 Translation
+    description: Initiates conversion to SVF2 format for the Autodesk Viewer.
+    command:
+      type: translate
+      action: start
+      urn: "{urn}"
+      format: svf2
+
+  - id: poll-status
+    name: Wait for Translation
+    description: Polls translation status until the job completes.
+    command:
+      type: translate
+      action: status
+      urn: "{urn}"
+      wait: true
+
+  - id: view-manifest
+    name: View Translation Manifest
+    description: Retrieves the manifest showing all available derivatives.
+    command:
+      type: translate
+      action: manifest
+      urn: "{urn}"
+
+  - id: download-derivatives
+    name: Download Derivatives
+    description: Downloads the SVF2 derivatives for offline viewing or inspection.
+    command:
+      type: translate
+      action: download
+      urn: "{urn}"
+      output_dir: ./derivatives
+
+cleanup:
+  - type: bucket
+    action: delete
+    bucket_name: raps-viewer-pipeline-{uuid}
+    force: true
