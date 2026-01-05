@@ -3,6 +3,7 @@
 //! This library provides the core functionality for the RAPS Demo Workflows system,
 //! including workflow discovery, execution, and resource management.
 
+pub mod assets;
 pub mod config;
 pub mod demo;
 pub mod resource;

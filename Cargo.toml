@@ -13,6 +13,10 @@ categories = ["command-line-utilities", "development-tools"]
 name = "raps-demo"
 path = "src/main.rs"
 
+[[bin]]
+name = "download-assets"
+path = "src/bin/download-assets.rs"
+
 [dependencies]
 # CLI and argument parsing
 clap = { version = "4.4", features = ["derive", "env"] }
@@ -49,7 +53,10 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 
 # HTTP client for API validation
-reqwest = { version = "0.11", features = ["json"] }
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+
+# ZIP archive handling for asset extraction
+zip = "0.6"
 
 # Open URLs in browser
 open = "5.0"
