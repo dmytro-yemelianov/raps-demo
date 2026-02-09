@@ -1,0 +1,63 @@
+metadata:
+  id: webhook-management
+  name: Webhook Management
+  description: Demonstrates webhook lifecycle management including listing available events, creating subscriptions, testing endpoints, and cleanup. Essential for event-driven APS integrations.
+  category: webhooks
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials required
+  estimated_duration: 30
+  required_assets: []
+
+steps:
+  - id: list-events
+    name: List Available Events
+    description: Shows all webhook event types available for subscription (dm.version.added, extraction.started, etc.).
+    command:
+      type: custom
+      command: raps
+      args:
+        - webhook
+        - events
+
+  - id: list-webhooks
+    name: List Active Webhooks
+    description: Lists all currently active webhook subscriptions.
+    command:
+      type: custom
+      command: raps
+      args:
+        - webhook
+        - list
+
+  - id: create-webhook
+    name: Create Webhook Subscription
+    description: Creates a new webhook subscription for Data Management version events.
+    command:
+      type: custom
+      command: raps
+      args:
+        - webhook
+        - create
+        - --url
+        - https://example.com/webhook-receiver
+        - --event
+        - dm.version.added
+
+  - id: test-webhook
+    name: Test Webhook Endpoint
+    description: Sends a test payload to verify the webhook endpoint is responding.
+    command:
+      type: custom
+      command: raps
+      args:
+        - webhook
+        - test
+        - https://example.com/webhook-receiver
+
+cleanup:
+  - type: custom
+    command: raps
+    args:
+      - webhook
+      - list

@@ -1,0 +1,23 @@
+# RAPS Webhooks Demo
+# Demonstrates webhook event discovery and management
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 40
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output webhooks-demo.gif
+
+Require raps
+
+Type "raps webhook events"
+Enter
+Sleep 3s
+
+Type "raps webhook list"
+Enter
+Sleep 3s

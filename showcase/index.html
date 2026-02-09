@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAPS Demo Workflows Showcase</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --bg-card: #1e293b;
+      --bg-code: #0d1117;
+      --border: #334155;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #f59e0b;
+      --accent-light: #fbbf24;
+      --accent-dim: rgba(245, 158, 11, 0.15);
+      --radius: 12px;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(245,158,11,0.05) 0%, transparent 100%);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .header h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 1.125rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .header-links {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .header-links a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .header-links a:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* Main */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Category Section */
+    .category {
+      margin-bottom: 3rem;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .category-icon {
+      font-size: 1.75rem;
+      line-height: 1;
+    }
+
+    .category-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .category-header p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-left: auto;
+    }
+
+    /* Workflow Cards Grid */
+    .workflows {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .workflows { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1024px) {
+      .workflows { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .card-gif {
+      width: 100%;
+      display: block;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    .card-body h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .card-body .desc {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .card-commands {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .card-commands .prompt {
+      color: #4ade80;
+    }
+
+    .card-commands .cmd {
+      color: #e2e8f0;
+    }
+
+    /* Terminal chrome on GIF */
+    .terminal-wrapper {
+      position: relative;
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(30, 41, 59, 0.95);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .terminal-dot.red { background: #ef4444; opacity: 0.8; }
+    .terminal-dot.yellow { background: #eab308; opacity: 0.8; }
+    .terminal-dot.green { background: #22c55e; opacity: 0.8; }
+
+    .terminal-title {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 2rem 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Stats bar */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h1><span>RAPS</span> Demo Workflows</h1>
+    <p>Interactive demonstrations of every Autodesk Platform Services capability through the RAPS CLI.</p>
+    <div class="header-links">
+      <a href="https://github.com/dmytro-yemelianov/raps">GitHub</a>
+      <a href="https://rapscli.xyz">Documentation</a>
+      <a href="https://rapscli.xyz/quickstart">Quick Start</a>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value">8</div>
+      <div class="stat-label">Categories</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">13+</div>
+      <div class="stat-label">Workflows</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">15+</div>
+      <div class="stat-label">APS APIs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">100+</div>
+      <div class="stat-label">CLI Commands</div>
+    </div>
+  </div>
+
+  <main class="main">
+
+    <!-- OSS -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x1F4E6;</span>
+        <h2>Object Storage Service</h2>
+        <p>4 workflows</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps oss</span>
+            </div>
+            <img class="card-gif" src="gifs/oss-demo.gif" alt="OSS bucket and object operations demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Bucket &amp; Object Lifecycle</h3>
+            <p class="desc">Create buckets, upload files, list objects, generate signed URLs, and download files. Demonstrates the full object storage lifecycle.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps bucket list</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps bucket create --key demo-bucket</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps object upload demo-bucket model.rvt</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps object list demo-bucket</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Model Derivative -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x1F504;</span>
+        <h2>Model Derivative</h2>
+        <p>3 workflows</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps translate</span>
+            </div>
+            <img class="card-gif" src="gifs/model-derivative-demo.gif" alt="Model translation pipeline demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Translation Pipeline</h3>
+            <p class="desc">Translate CAD models to SVF2, OBJ, STEP, and other formats. Monitor translation progress and download derivatives for offline use.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps translate start $URN --format svf2</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps translate status $URN --wait</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps translate manifest $URN</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps translate download $URN -o ./derivatives</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Management -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x1F4C1;</span>
+        <h2>Data Management</h2>
+        <p>1 workflow</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps dm</span>
+            </div>
+            <img class="card-gif" src="gifs/data-management-demo.gif" alt="Data management hub exploration demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Hub &amp; Project Explorer</h3>
+            <p class="desc">Navigate the ACC/BIM 360 hierarchy: list hubs, browse projects, and explore folder structures for document management.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps dm hub list</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps dm project list $HUB_ID</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps dm folder list $PROJECT_ID $FOLDER_ID</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Design Automation -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x2699;&#xFE0F;</span>
+        <h2>Design Automation</h2>
+        <p>1 workflow</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps da</span>
+            </div>
+            <img class="card-gif" src="gifs/design-automation-demo.gif" alt="Design Automation engine exploration demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Engine &amp; Activity Explorer</h3>
+            <p class="desc">Explore the Design Automation ecosystem: list available engines (AutoCAD, Revit, Inventor), app bundles, and reusable activities.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps da engines</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps da appbundles</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps da activities</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACC -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x1F3D7;&#xFE0F;</span>
+        <h2>Autodesk Construction Cloud</h2>
+        <p>1 workflow</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps acc</span>
+            </div>
+            <img class="card-gif" src="gifs/acc-demo.gif" alt="ACC project overview demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Project Overview</h3>
+            <p class="desc">Inspect ACC project data: list tracked assets, review submittals, browse quality checklists, and view available templates.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps acc asset list $PROJECT_ID</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps acc submittal list $PROJECT_ID</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps acc checklist list $PROJECT_ID</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps acc checklist templates $PROJECT_ID</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reality Capture -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x1F4F7;</span>
+        <h2>Reality Capture</h2>
+        <p>1 workflow</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps reality</span>
+            </div>
+            <img class="card-gif" src="gifs/reality-capture-demo.gif" alt="Reality Capture photogrammetry pipeline demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Photoscene Pipeline</h3>
+            <p class="desc">Create photogrammetry photoscenes from aerial or object photos. View available output formats (RCM, OBJ, FBX) and monitor processing.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps reality formats</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps reality create --name site-scan --scene_type aerial</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps reality status $PHOTOSCENE_ID</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Webhooks -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x1F514;</span>
+        <h2>Webhooks</h2>
+        <p>1 workflow</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps webhook</span>
+            </div>
+            <img class="card-gif" src="gifs/webhooks-demo.gif" alt="Webhook management demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Webhook Management</h3>
+            <p class="desc">Manage event-driven integrations: list available webhook events, create subscriptions, test endpoints, and monitor active hooks.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps webhook events</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps webhook list</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps webhook create --url https://example.com/hook --event dm.version.added</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps webhook test https://example.com/hook</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- End-to-End -->
+    <section class="category">
+      <div class="category-header">
+        <span class="category-icon">&#x1F680;</span>
+        <h2>End-to-End Pipelines</h2>
+        <p>1 workflow</p>
+      </div>
+      <div class="workflows">
+        <div class="card">
+          <div class="terminal-wrapper">
+            <div class="terminal-bar">
+              <div class="terminal-dot red"></div>
+              <div class="terminal-dot yellow"></div>
+              <div class="terminal-dot green"></div>
+              <span class="terminal-title">Terminal &mdash; raps pipeline</span>
+            </div>
+            <img class="card-gif" src="gifs/end-to-end-demo.gif" alt="End-to-end viewer pipeline demo" loading="lazy">
+          </div>
+          <div class="card-body">
+            <h3>Complete Viewer Pipeline</h3>
+            <p class="desc">Full APS workflow: authenticate, create storage, upload a model, translate to SVF2, and retrieve the manifest. Everything from zero to viewer-ready.</p>
+            <div class="card-commands">
+              <div><span class="prompt">$</span> <span class="cmd">raps auth test</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps bucket create --key pipeline-demo</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps object upload pipeline-demo building.rvt</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps translate start $URN --format svf2 --wait</span></div>
+              <div><span class="prompt">$</span> <span class="cmd">raps translate manifest $URN</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>
+      Built with <a href="https://github.com/dmytro-yemelianov/yr">yr</a> terminal recordings &middot;
+      <a href="https://github.com/dmytro-yemelianov/raps">RAPS CLI</a> &middot;
+      <a href="https://rapscli.xyz">rapscli.xyz</a>
+    </p>
+  </footer>
+
+</body>
+</html>

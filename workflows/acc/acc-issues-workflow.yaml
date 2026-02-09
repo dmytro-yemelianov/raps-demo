@@ -1,0 +1,63 @@
+metadata:
+  id: acc-project-overview
+  name: ACC Project Overview
+  description: Explores Autodesk Construction Cloud project data including assets, submittals, and checklists. Demonstrates ACC inspection and management capabilities.
+  category: acc
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials with ACC scope required
+    - type: permissions
+      description: Access to at least one ACC project
+  estimated_duration: 45
+  required_assets: []
+
+steps:
+  - id: list-assets
+    name: List Project Assets
+    description: Lists all tracked assets in the ACC project.
+    command:
+      type: custom
+      command: raps
+      args:
+        - acc
+        - asset
+        - list
+        - "{project_id}"
+
+  - id: list-submittals
+    name: List Submittals
+    description: Lists all submittals for review and approval tracking.
+    command:
+      type: custom
+      command: raps
+      args:
+        - acc
+        - submittal
+        - list
+        - "{project_id}"
+
+  - id: list-checklists
+    name: List Checklists
+    description: Lists all quality and safety checklists in the project.
+    command:
+      type: custom
+      command: raps
+      args:
+        - acc
+        - checklist
+        - list
+        - "{project_id}"
+
+  - id: list-templates
+    name: List Checklist Templates
+    description: Lists available checklist templates for creating new inspections.
+    command:
+      type: custom
+      command: raps
+      args:
+        - acc
+        - checklist
+        - templates
+        - "{project_id}"
+
+cleanup: []

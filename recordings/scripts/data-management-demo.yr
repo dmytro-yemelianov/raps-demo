@@ -1,0 +1,24 @@
+# RAPS Data Management Demo
+# Demonstrates hub and project navigation
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 40
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output data-management-demo.gif
+
+Require raps
+
+Type "raps hub list"
+Enter
+Sleep 3s
+
+Type "raps project list "
+Paste "b.01fb1602-2ec0-4b05-bf6e-39dc70b3ae05"
+Enter
+Sleep 3s

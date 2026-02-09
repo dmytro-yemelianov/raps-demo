@@ -1,0 +1,31 @@
+# RAPS End-to-End Demo
+# Complete pipeline: auth, storage, translation presets, project discovery
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 40
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output end-to-end-demo.gif
+
+Require raps
+
+Type "raps auth test"
+Enter
+Sleep 3s
+
+Type "raps bucket create --key e2e-demo-rec --policy transient --region US"
+Enter
+Sleep 3s
+
+Type "raps translate preset list"
+Enter
+Sleep 3s
+
+Type "raps hub list"
+Enter
+Sleep 3s

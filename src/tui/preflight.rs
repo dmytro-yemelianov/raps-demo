@@ -6,6 +6,7 @@
 //! - Other prerequisites (permissions, external tools)
 
 use std::path::{Path, PathBuf};
+use std::cell::RefCell;
 use crate::assets::{AssetCategory, AssetDefinition, AssetDownloader, AssetRegistry, AssetStatus};
 use crate::workflow::{WorkflowMetadata, PrerequisiteType};
 
@@ -66,6 +67,10 @@ pub struct PreflightChecker {
     assets_dir: PathBuf,
     /// Asset registry for looking up available assets
     registry: AssetRegistry,
+    /// Cached downloader to avoid recreating HTTP client on every call
+    cached_downloader: RefCell<Option<AssetDownloader>>,
+    /// Cached asset status (asset definitions with download status)
+    cached_assets_status: RefCell<Option<Vec<(AssetDefinition, bool)>>>,
 }
 
 impl PreflightChecker {
@@ -74,12 +79,17 @@ impl PreflightChecker {
         Self {
             assets_dir: PathBuf::from("./sample-models/autodesk"),
             registry: AssetRegistry::new(),
+            cached_downloader: RefCell::new(None),
+            cached_assets_status: RefCell::new(None),
         }
     }
     
     /// Set the assets directory
     pub fn with_assets_dir<P: AsRef<Path>>(mut self, dir: P) -> Self {
         self.assets_dir = dir.as_ref().to_path_buf();
+        // Reset caches when directory changes
+        *self.cached_downloader.borrow_mut() = None;
+        *self.cached_assets_status.borrow_mut() = None;
         self
     }
     
@@ -301,8 +311,21 @@ impl PreflightChecker {
     }
     
     /// Get the asset downloader for downloading missing assets
-    pub fn get_downloader(&self) -> anyhow::Result<AssetDownloader> {
-        AssetDownloader::new(&self.assets_dir)
+    /// Uses cached downloader to avoid recreating HTTP client on every call
+    fn ensure_downloader(&self) -> anyhow::Result<()> {
+        let mut cached = self.cached_downloader.borrow_mut();
+        if cached.is_none() {
+            *cached = Some(AssetDownloader::new(&self.assets_dir)?);
+        }
+        Ok(())
+    }
+    
+    /// Get the asset downloader (must call ensure_downloader first)
+    pub fn get_downloader(&self) -> anyhow::Result<std::cell::Ref<'_, AssetDownloader>> {
+        self.ensure_downloader()?;
+        Ok(std::cell::Ref::map(self.cached_downloader.borrow(), |opt| {
+            opt.as_ref().expect("downloader should be initialized")
+        }))
     }
     
     /// Get the current asset status
@@ -312,22 +335,46 @@ impl PreflightChecker {
     }
     
     /// Get all assets with their download status
+    /// Uses cached data for fast repeated access during UI rendering
     pub fn get_all_assets_with_status(&self) -> Vec<(AssetDefinition, bool)> {
-        if let Ok(downloader) = self.get_downloader() {
-            self.registry.all().iter()
-                .map(|a: &AssetDefinition| (a.clone(), downloader.is_downloaded(a)))
-                .collect()
-        } else {
-            self.registry.all().iter()
-                .map(|a: &AssetDefinition| (a.clone(), false))
-                .collect()
+        // Check if we have cached status
+        {
+            let cached = self.cached_assets_status.borrow();
+            if let Some(ref status) = *cached {
+                return status.clone();
+            }
         }
+        
+        // Build and cache the status
+        let status: Vec<(AssetDefinition, bool)> = match self.get_downloader() {
+            Ok(downloader) => {
+                self.registry.all().iter()
+                    .map(|a: &AssetDefinition| (a.clone(), downloader.is_downloaded(a)))
+                    .collect::<Vec<_>>()
+            }
+            Err(_) => {
+                self.registry.all().iter()
+                    .map(|a: &AssetDefinition| (a.clone(), false))
+                    .collect::<Vec<_>>()
+            }
+        };
+        
+        *self.cached_assets_status.borrow_mut() = Some(status.clone());
+        status
+    }
+    
+    /// Invalidate the cached asset status (call after downloading assets)
+    pub fn invalidate_asset_cache(&self) {
+        *self.cached_assets_status.borrow_mut() = None;
     }
     
     /// Download a specific asset
     pub fn download_asset(&self, asset: &AssetDefinition) -> anyhow::Result<PathBuf> {
         let downloader = self.get_downloader()?;
-        downloader.download(asset)
+        let result = downloader.download(asset);
+        // Invalidate cache after download
+        self.invalidate_asset_cache();
+        result
     }
     
     /// Download all missing assets for a workflow
@@ -341,6 +388,8 @@ impl PreflightChecker {
                 let path = downloader.download(&asset)?;
                 paths.push(path);
             }
+            // Invalidate cache after downloads
+            self.invalidate_asset_cache();
             Ok(paths)
         } else {
             Ok(Vec::new())

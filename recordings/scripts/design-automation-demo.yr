@@ -1,0 +1,27 @@
+# RAPS Design Automation Demo
+# Demonstrates DA engine and activity exploration
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 40
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output design-automation-demo.gif
+
+Require raps
+
+Type "raps da engines"
+Enter
+Sleep 3s
+
+Type "raps da appbundles"
+Enter
+Sleep 3s
+
+Type "raps da activities"
+Enter
+Sleep 3s

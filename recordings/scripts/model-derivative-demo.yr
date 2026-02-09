@@ -1,0 +1,27 @@
+# RAPS Model Derivative Demo
+# Demonstrates translation presets and pipeline options
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 40
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output model-derivative-demo.gif
+
+Require raps
+
+Type "raps translate preset list"
+Enter
+Sleep 3s
+
+Type "raps translate start --help"
+Enter
+Sleep 3s
+
+Type "raps translate manifest --help"
+Enter
+Sleep 3s

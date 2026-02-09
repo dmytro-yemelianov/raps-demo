@@ -1,0 +1,29 @@
+# RAPS ACC Demo — Autodesk Construction Cloud
+# Demonstrates ACC and issue management commands
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 40
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output acc-demo.gif
+
+Require raps
+
+Type "raps issue types "
+Paste "00840175-ae89-4c89-b207-2640bc8fc2cc"
+Enter
+Sleep 4s
+
+Type "raps issue list "
+Paste "00840175-ae89-4c89-b207-2640bc8fc2cc"
+Enter
+Sleep 3s
+
+Type "raps acc --help"
+Enter
+Sleep 3s

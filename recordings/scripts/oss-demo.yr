@@ -1,0 +1,27 @@
+# RAPS OSS Demo — Object Storage Service
+# Demonstrates bucket and object operations
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 40
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output oss-demo.gif
+
+Require raps
+
+Type "raps auth test"
+Enter
+Sleep 3s
+
+Type "raps bucket create --key oss-demo-rec --policy transient --region US"
+Enter
+Sleep 3s
+
+Type "raps bucket info oss-demo-rec"
+Enter
+Sleep 3s

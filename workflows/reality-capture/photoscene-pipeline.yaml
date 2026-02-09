@@ -1,0 +1,56 @@
+metadata:
+  id: photoscene-pipeline
+  name: Reality Capture Photoscene Pipeline
+  description: Demonstrates the photogrammetry pipeline using the Reality Capture API. Shows available output formats and walks through creating and processing a photoscene.
+  category: reality-capture
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials with Reality Capture scope required
+  estimated_duration: 60
+  required_assets: []
+
+steps:
+  - id: list-formats
+    name: List Output Formats
+    description: Shows available output formats for reality capture processing (RCM, OBJ, FBX, etc.).
+    command:
+      type: custom
+      command: raps
+      args:
+        - reality
+        - formats
+
+  - id: create-photoscene
+    name: Create Photoscene
+    description: Creates a new photoscene for aerial photogrammetry processing.
+    command:
+      type: custom
+      command: raps
+      args:
+        - reality
+        - create
+        - --name
+        - raps-demo-scene-{uuid}
+        - --scene_type
+        - aerial
+        - --format
+        - rcm
+
+  - id: check-status
+    name: Check Processing Status
+    description: Checks the processing status of the photoscene.
+    command:
+      type: custom
+      command: raps
+      args:
+        - reality
+        - status
+        - "{photoscene_id}"
+
+cleanup:
+  - type: custom
+    command: raps
+    args:
+      - reality
+      - delete
+      - "{photoscene_id}"

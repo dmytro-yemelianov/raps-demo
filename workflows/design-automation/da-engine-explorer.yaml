@@ -1,0 +1,34 @@
+metadata:
+  id: da-engine-explorer
+  name: Design Automation Explorer
+  description: Explores the Design Automation ecosystem by listing available engines, app bundles, and activities. Provides an overview of the DA pipeline components.
+  category: design-automation
+  prerequisites:
+    - type: authentication
+      description: Valid APS credentials with Design Automation scope required
+  estimated_duration: 30
+  required_assets: []
+
+steps:
+  - id: list-engines
+    name: List Available Engines
+    description: Lists all available Design Automation engines (AutoCAD, Revit, Inventor, 3ds Max).
+    command:
+      type: design-automation
+      action: app-bundles
+
+  - id: list-appbundles
+    name: List App Bundles
+    description: Lists all registered app bundles (custom plugins uploaded to DA).
+    command:
+      type: design-automation
+      action: app-bundles
+
+  - id: list-activities
+    name: List Activities
+    description: Lists all defined activities (reusable automation recipes).
+    command:
+      type: design-automation
+      action: activities
+
+cleanup: []
