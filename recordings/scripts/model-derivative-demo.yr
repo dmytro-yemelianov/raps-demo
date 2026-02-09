@@ -1,5 +1,5 @@
 # RAPS Model Derivative Demo
-# Demonstrates translation presets and pipeline options
+# Translate a CAD model and inspect the results
 
 Set Shell "powershell -NoLogo"
 Set Width 90
@@ -18,10 +18,18 @@ Type "raps translate preset list"
 Enter
 Sleep 3s
 
-Type "raps translate start --help"
+Type "raps translate start "
+Paste "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6eXItZGVtby10cmFuc2xhdGUvVmFsdmUuaXB0"
+Type " --format svf2"
+Enter
+Sleep 4s
+
+Type "raps translate status "
+Paste "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6eXItZGVtby10cmFuc2xhdGUvVmFsdmUuaXB0"
 Enter
 Sleep 3s
 
-Type "raps translate manifest --help"
+Type "raps translate manifest "
+Paste "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6eXItZGVtby10cmFuc2xhdGUvVmFsdmUuaXB0"
 Enter
-Sleep 3s
+Sleep 5s

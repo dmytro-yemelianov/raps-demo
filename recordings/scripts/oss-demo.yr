@@ -1,5 +1,5 @@
 # RAPS OSS Demo — Object Storage Service
-# Demonstrates bucket and object operations
+# Upload a CAD file, list objects, inspect bucket
 
 Set Shell "powershell -NoLogo"
 Set Width 90
@@ -14,14 +14,18 @@ Output oss-demo.gif
 
 Require raps
 
-Type "raps auth test"
+Type "raps bucket create --key yr-demo-oss --policy transient --region US"
 Enter
 Sleep 3s
 
-Type "raps bucket create --key oss-demo-rec --policy transient --region US"
+Type "raps object upload yr-demo-oss Valve.ipt"
+Enter
+Sleep 5s
+
+Type "raps object list yr-demo-oss"
 Enter
 Sleep 3s
 
-Type "raps bucket info oss-demo-rec"
+Type "raps bucket info yr-demo-oss"
 Enter
 Sleep 3s

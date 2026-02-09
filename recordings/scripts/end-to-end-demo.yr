@@ -1,5 +1,5 @@
 # RAPS End-to-End Demo
-# Complete pipeline: auth, storage, translation presets, project discovery
+# Full pipeline: auth, upload, translate, project discovery
 
 Set Shell "powershell -NoLogo"
 Set Width 90
@@ -18,13 +18,15 @@ Type "raps auth test"
 Enter
 Sleep 3s
 
-Type "raps bucket create --key e2e-demo-rec --policy transient --region US"
+Type "raps object upload yr-demo-translate rstbasicsampleproject.rvt"
 Enter
-Sleep 3s
+Sleep 8s
 
-Type "raps translate preset list"
+Type "raps translate start "
+Paste "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6eXItZGVtby10cmFuc2xhdGUvcnN0YmFzaWNzYW1wbGVwcm9qZWN0LnJ2dA"
+Type " --format svf2"
 Enter
-Sleep 3s
+Sleep 4s
 
 Type "raps hub list"
 Enter
