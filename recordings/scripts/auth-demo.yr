@@ -1,0 +1,23 @@
+# RAPS Auth Demo — Authentication commands
+# Tests 2-legged OAuth and shows auth status
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 24
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output auth-demo.gif
+
+Require raps
+
+Type "raps auth test"
+Enter
+Sleep 3s
+
+Type "raps auth status"
+Enter
+Sleep 3s

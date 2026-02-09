@@ -1,0 +1,35 @@
+# RAPS Shell Demo — Interactive shell with TAB completion
+# Shows raps shell with help and command execution
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 30
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output shell-demo.gif
+
+Require raps
+
+Type "raps shell"
+Enter
+Sleep 2s
+
+Type "help"
+Enter
+Sleep 3s
+
+Type "auth test"
+Enter
+Sleep 3s
+
+Type "bucket list"
+Enter
+Sleep 3s
+
+Type "exit"
+Enter
+Sleep 1s

@@ -1,0 +1,23 @@
+# RAPS MCP Demo — Model Context Protocol server
+# Shows raps serve startup (brief, then Ctrl+C)
+
+Set Shell "powershell -NoLogo"
+Set Width 90
+Set Height 30
+Set FontSize 16
+Set Theme "dracula"
+Set TypingSpeed 35ms
+Set Padding 20
+Set Redact true
+
+Output mcp-demo.gif
+
+Require raps
+
+Type "raps serve --help"
+Enter
+Sleep 3s
+
+Type "raps --version"
+Enter
+Sleep 2s
