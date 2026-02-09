@@ -1,5 +1,5 @@
 # RAPS Webhooks Demo
-# Demonstrates webhook event discovery and management
+# Full webhook lifecycle: events, create, list, test, delete
 
 Set Shell "powershell -NoLogo"
 Set Width 90
@@ -14,10 +14,27 @@ Output webhooks-demo.gif
 
 Require raps
 
+# Show available webhook events
 Type "raps webhook events"
 Enter
 Sleep 3s
 
+# Create first webhook (extraction.finished)
+Type "raps webhook create -e extraction.finished -u https://httpbin.org/post --workflow demo-pipeline"
+Enter
+Sleep 4s
+
+# Create second webhook (extraction.updated)
+Type "raps webhook create -e extraction.updated -u https://httpbin.org/post --workflow demo-pipeline-v2"
+Enter
+Sleep 4s
+
+# List all webhooks - shows both active
 Type "raps webhook list"
 Enter
 Sleep 3s
+
+# Test the webhook endpoint
+Type "raps webhook test https://httpbin.org/post"
+Enter
+Sleep 4s
