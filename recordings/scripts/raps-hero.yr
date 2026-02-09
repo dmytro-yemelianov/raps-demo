@@ -1,5 +1,5 @@
 # RAPS Hero — Landing page showcase
-# Quick demo: auth, buckets, translation presets
+# Quick demo: auth, version, translation presets
 
 Set Shell "powershell -NoLogo"
 Set Width 90
@@ -14,11 +14,11 @@ Output raps-hero.gif
 
 Require raps
 
-Type "raps auth test"
+Type "raps --version"
 Enter
-Sleep 3s
+Sleep 2s
 
-Type "raps bucket list"
+Type "raps auth test"
 Enter
 Sleep 3s
 

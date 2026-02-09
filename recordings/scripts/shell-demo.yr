@@ -26,9 +26,9 @@ Type "auth test"
 Enter
 Sleep 3s
 
-Type "bucket list"
+Type "translate preset list"
 Enter
-Sleep 3s
+Sleep 5s
 
 Type "exit"
 Enter
